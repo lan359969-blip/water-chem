@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>水处理加药计算系统 v3.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 先加载 React 库 -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    const { useState, useEffect, createElement: h, Fragment } = React;
+    const { createRoot } = ReactDOM;
+
+    // ==================== 配置 ====================
+    const CONFIG = {
+      version: '3.0.0',
+      storageKey: 'water_v3'
+    };
+
+    // ==================== 计算引擎 ====================
+    class Calc {
+      static dosing(p1c, p1f, p2c, p2f, conc, w) {
+        return {
+          p1: {
+            coagAB: ((p1c.a + p1c.b) * conc.p1Coag * 0.2).toFixed(2),
+            coagCD: ((p1c.c + p1c.d) * conc.p1Coag * 0.2).toFixed(2),
+            flocAB: ((p1f.a + p1f.b) * conc.p1Floc * 0.2).toFixed(2),
+            flocCD: ((p1f.c + p1f.d) * conc.p1Floc * 0.2).toFixed(2)
+          },
+          p2: {
+            c51: w.w51 > 0 ? (p2c.s51 * conc.p2Coag * 100 / w.w51).toFixed(2) : '0.00',
+            c52: w.w52 > 0 ? (p2c.s52 * conc.p2Coag * 100 / w.w52).toFixed(2) : '0.00',
+            c61: w.w61 > 0 ? (p2c.s61 * conc.p2Coag * 100 / w.w61).toFixed(2) : '0.00',
+            c62: w.w62 > 0 ? (p2c.s62 * conc.p2Coag * 100 / w.w62).toFixed(2) : '0.00',
+            f51: w.w51 > 0 ? (p2f.s51 * conc.p2Floc * 100 / w.w51).toFixed(2) : '0.00',
+            f52: w.w52 > 0 ? (p2f.s52 * conc.p2Floc * 100 / w.w52).toFixed(2) : '0.00',
+            f61: w.w61 > 0 ? (p2f.s61 * conc.p2Floc * 100 / w.w61).toFixed(2) : '0.00',
+            f62: w.w62 > 0 ? (p2f.s62 * conc.p2Floc * 100 / w.w62).toFixed(2) : '0.00'
+          }
+        };
+      }
+
+      static chlorine(pre, main, supp, conc, w, incSupp) {
+        const e = w.w51 + w.w52;
+        const f = w.w61 + w.w62;
+        const r = {
+          pre: {
+            ab: w.ab > 0 ? (pre.ab * conc.cl1 * 0.1 * 1000 / w.ab).toFixed(2) : '0.00',
+            cd: w.cd > 0 ? (pre.cd * conc.cl1 * 0.1 * 1000 / w.cd).toFixed(2) : '0.00',
+            e: e > 0 ? (pre.e * conc.cl2 * 100 / e).toFixed(2) : '0.00',
+            f: f > 0 ? (pre.f * conc.cl2 * 100 / f).toFixed(2) : '0.00'
+          },
+          main: {
+            ab: w.ab > 0 ? (main.ab * conc.cl1 * 0.1 * 1000 / w.ab).toFixed(2) : '0.00',
+            cd: w.cd > 0 ? (main.cd * conc.cl1 * 0.1 * 1000 / w.cd).toFixed(2) : '0.00',
+            e: e > 0 ? (main.e * conc.cl2 * 100 / e).toFixed(2) : '0.00',
+            f: f > 0 ? (main.f * conc.cl2 * 100 / f).toFixed(2) : '0.00'
+          }
+        };
+        if (incSupp) {
+          r.supp = {
+            a: w.ab > 0 ? (supp.a * conc.cl1 * 0.1 * 1000 / w.ab).toFixed(2) : '0.00',
+            b: w.ab > 0 ? (supp.b * conc.cl1 * 0.1 * 1000 / w.ab).toFixed(2) : '0.00',
+            c: w.cd > 0 ? (supp.c * conc.cl1 * 0.1 * 1000 / w.cd).toFixed(2) : '0.00',
+            d: w.cd > 0 ? (supp.d * conc.cl1 * 0.1 * 1000 / w.cd).toFixed(2) : '0.00'
+          };
+        }
+        return r;
+      }
+
+      static parseWX(txt) {
+        const m12 = /(?<=【1-2系:\s*)\d+(?=】)/.exec(txt);
+        const m34 = /(?<=【3-4系:\s*)\d+(?=】)/.exec(txt);
+        const m56 = /(?<=【5-6系:\s*)\d+(?=】)/.exec(txt);
+        return m12 && m34 && m56 ? { s12: +m12[0], s34: +m34[0], s56: +m56[0] } : null;
+      }
+    }
+
+    // ==================== 工具 ====================
+    async function copy(txt) {
+      try {
+        await navigator.clipboard.writeText(txt);
+        return true;
+      } catch (e) {
+        const el = document.createElement('textarea');
+        el.value = txt;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        try {
+          document.execCommand('copy');
+          document.body.removeChild(el);
+          return true;
+        } catch (err) {
+          document.body.removeChild(el);
+          return false;
+        }
+      }
+    }
+
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2000);
+    }
+
+    // ==================== UI组件 ====================
+    function Input({ label, value, onChange, step = '1' }) {
+      return h('div', { className: 'mb-3' },
+        h('label', { className: 'block text-sm font-medium text-gray-700 mb-1' }, label),
+        h('input', {
+          type: 'number',
+          value: value,
+          onChange: onChange,
+          step: step,
+          className: 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none'
+        })
+      );
+    }
+
+    function Card({ title, children }) {
+      return h('div', { className: 'bg-white rounded-xl shadow-md mb-4' },
+        h('div', { className: 'bg-gradient-to-r from-emerald-500 to-teal-400 text-white px-4 py-3' },
+          h('h2', { className: 'text-lg font-semibold' }, title)
+        ),
+        h('div', { className: 'p-4' }, children)
+      );
+    }
+
+    // ==================== 主应用 ====================
+    function App() {
+      const [tab, setTab] = useState('dosing');
+      const [w, setW] = useState({ s12: 0, s34: 0, s56: 0, w51: 0, w52: 0, w61: 0, w62: 0 });
+      const [conc, setConc] = useState({ p1Coag: 10, p1Floc: 5, p2Coag: 10, p2Floc: 5, cl1: 0, cl2: 0 });
+      const [ratios, setRatios] = useState({ r51: 0.25, r52: 0.25, r61: 0.25, r62: 0.25 });
+      const [wx, setWx] = useState('');
+      
+      const [p1c, setP1c] = useState({ a: 0, b: 0, c: 0, d: 0 });
+      const [p1f, setP1f] = useState({ a: 0, b: 0, c: 0, d: 0 });
+      const [p2c, setP2c] = useState({ s51: 0, s52: 0, s61: 0, s62: 0 });
+      const [p2f, setP2f] = useState({ s51: 0, s52: 0, s61: 0, s62: 0 });
+      
+      const [pre, setPre] = useState({ ab: 0, cd: 0, e: 0, f: 0 });
+      const [main, setMain] = useState({ ab: 0, cd: 0, e: 0, f: 0 });
+      const [supp, setSupp] = useState({ a: 0, b: 0, c: 0, d: 0 });
+      const [incSupp, setIncSupp] = useState(false);
+      
+      const [dRes, setDRes] = useState(null);
+      const [cRes, setCRes] = useState(null);
+
+      useEffect(() => {
+        const total = w.s56;
+        if (total > 0) {
+          setW(p => ({
+            ...p,
+            w51: Math.round(total * ratios.r51),
+            w52: Math.round(total * ratios.r52),
+            w61: Math.round(total * ratios.r61),
+            w62: Math.round(total * ratios.r62)
+          }));
+        }
+      }, [w.s56, ratios]);
+
+      const parseWX = () => {
+        const parsed = Calc.parseWX(wx);
+        if (parsed) {
+          setW(p => ({ ...p, ...parsed }));
+          toast('✅ 解析成功');
+          setWx('');
+        } else {
+          toast('❌ 格式错误');
+        }
+      };
+
+      const calcDosing = () => {
+        const res = Calc.dosing(p1c, p1f, p2c, p2f, conc, w);
+        setDRes(res);
+        toast('✅ 计算完成');
+      };
+
+      const calcCl = () => {
+        const res = Calc.chlorine(pre, main, supp, conc, { ab: w.s12, cd: w.s34, w51: w.w51, w52: w.w52, w61: w.w61, w62: w.w62 }, incSupp);
+        setCRes(res);
+        toast('✅ 计算完成');
+      };
+
+      const doCopy = async (type) => {
+        let txt = '';
+        if (type === 'd' && dRes) {
+          txt = `一期：\n混凝 AB:${dRes.p1.coagAB} CD:${dRes.p1.coagCD}\n助凝 AB:${dRes.p1.flocAB} CD:${dRes.p1.flocCD}\n\n二期：\n混凝 5-1:${dRes.p2.c51} 5-2:${dRes.p2.c52} 6-1:${dRes.p2.c61} 6-2:${dRes.p2.c62}\n助凝 5-1:${dRes.p2.f51} 5-2:${dRes.p2.f52} 6-1:${dRes.p2.f61} 6-2:${dRes.p2.f62}`;
+        } else if (type === 'c' && cRes) {
+          txt = `前加氯：\nAB:${cRes.pre.ab} CD:${cRes.pre.cd} E:${cRes.pre.e} F:${cRes.pre.f}\n\n主加氯：\nAB:${cRes.main.ab} CD:${cRes.main.cd} E:${cRes.main.e} F:${cRes.main.f}`;
+          if (cRes.supp) txt += `\n\n补氯：\nA:${cRes.supp.a} B:${cRes.supp.b} C:${cRes.supp.c} D:${cRes.supp.d}`;
+        }
+        const ok = await copy(txt);
+        toast(ok ? '✅ 已复制' : '❌ 失败');
+      };
+
+      return h('div', { className: 'min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-4' },
+        h('div', { className: 'max-w-4xl mx-auto' },
+          h('div', { className: 'bg-white rounded-xl shadow-md p-5 mb-4 text-center' },
+            h('h1', { className: 'text-2xl font-bold text-gray-800' }, '🧪 水处理加药计算系统'),
+            h('p', { className: 'text-sm text-gray-600 mt-1' }, '工程级 v' + CONFIG.version)
+          ),
+
+          h('div', { className: 'flex gap-2 mb-4' },
+            h('button', {
+              onClick: () => setTab('dosing'),
+              className: `flex-1 py-3 rounded-lg font-semibold ${tab === 'dosing' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-lg' : 'bg-white text-gray-600'}`
+            }, '💊 加药计算'),
+            h('button', {
+              onClick: () => setTab('chlorine'),
+              className: `flex-1 py-3 rounded-lg font-semibold ${tab === 'chlorine' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-lg' : 'bg-white text-gray-600'}`
+            }, '🧪 加氯计算')
+          ),
+
+          Card({ title: '📋 微信数据导入' },
+            h('textarea', {
+              value: wx,
+              onChange: (e) => setWx(e.target.value),
+              placeholder: '粘贴微信数据...',
+              className: 'w-full h-20 px-3 py-2 border rounded-lg resize-none mb-3'
+            }),
+            h('div', { className: 'flex gap-2' },
+              h('button', {
+                onClick: parseWX,
+                className: 'flex-1 bg-emerald-500 text-white py-2 rounded-lg hover:bg-emerald-600'
+              }, '解析'),
+              h('button', {
+                onClick: () => setWx(''),
+                className: 'px-4 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600'
+              }, '清空')
+            )
+          ),
+
+          Card({ title: '⚙️ 进水量配置' },
+            h('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-3 mb-4' },
+              Input({ label: '1-2系', value: w.s12, onChange: (e) => setW(p => ({ ...p, s12: +e.target.value || 0 })) }),
+              Input({ label: '3-4系', value: w.s34, onChange: (e) => setW(p => ({ ...p, s34: +e.target.value || 0 })) }),
+              Input({ label: '5-6系', value: w.s56, onChange: (e) => setW(p => ({ ...p, s56: +e.target.value || 0 })) })
+            ),
+            h('div', { className: 'p-3 bg-blue-50 rounded-lg' },
+              h('p', { className: 'text-sm text-blue-800 font-medium mb-2' }, '💡 水量分配调节'),
+              h('div', { className: 'grid grid-cols-2 gap-2' },
+                Input({
+                  label: '5-1系',
+                  value: w.w51,
+                  onChange: (e) => {
+                    const v = +e.target.value || 0;
+                    setW(p => ({ ...p, w51: v }));
+                    const t = v + w.w52 + w.w61 + w.w62;
+                    if (t > 0) setRatios({ r51: v/t, r52: w.w52/t, r61: w.w61/t, r62: w.w62/t });
+                  }
+                }),
+                Input({
+                  label: '5-2系',
+                  value: w.w52,
+                  onChange: (e) => {
+                    const v = +e.target.value || 0;
+                    setW(p => ({ ...p, w52: v }));
+                    const t = w.w51 + v + w.w61 + w.w62;
+                    if (t > 0) setRatios({ r51: w.w51/t, r52: v/t, r61: w.w61/t, r62: w.w62/t });
+                  }
+                }),
+                Input({
+                  label: '6-1系',
+                  value: w.w61,
+                  onChange: (e) => {
+                    const v = +e.target.value || 0;
+                    setW(p => ({ ...p, w61: v }));
+                    const t = w.w51 + w.w52 + v + w.w62;
+                    if (t > 0) setRatios({ r51: w.w51/t, r52: w.w52/t, r61: v/t, r62: w.w62/t });
+                  }
+                }),
+                Input({
+                  label: '6-2系',
+                  value: w.w62,
+                  onChange: (e) => {
+                    const v = +e.target.value || 0;
+                    setW(p => ({ ...p, w62: v }));
+                    const t = w.w51 + w.w52 + w.w61 + v;
+                    if (t > 0) setRatios({ r51: w.w51/t, r52: w.w52/t, r61: w.w61/t, r62: v/t });
+                  }
+                })
+              )
+            )
+          ),
+
+          tab === 'dosing' && h(Fragment, null,
+            Card({ title: '🧪 浓度配置' },
+              h('div', { className: 'grid grid-cols-2 gap-3' },
+                Input({ label: '一期混凝剂(%)', value: conc.p1Coag, onChange: (e) => setConc(p => ({ ...p, p1Coag: +e.target.value || 0 })), step: '0.1' }),
+                Input({ label: '一期助凝剂(%)', value: conc.p1Floc, onChange: (e) => setConc(p => ({ ...p, p1Floc: +e.target.value || 0 })), step: '0.1' }),
+                Input({ label: '二期混凝剂(%)', value: conc.p2Coag, onChange: (e) => setConc(p => ({ ...p, p2Coag: +e.target.value || 0 })), step: '0.1' }),
+                Input({ label: '二期助凝剂(%)', value: conc.p2Floc, onChange: (e) => setConc(p => ({ ...p, p2Floc: +e.target.value || 0 })), step: '0.1' })
+              )
+            ),
+
+            Card({ title: '📊 一期差值' },
+              h('h3', { className: 'font-semibold mb-2' }, '混凝剂'),
+              h('div', { className: 'grid grid-cols-2 gap-2 mb-4' },
+                ['a', 'b', 'c', 'd'].map(k => Input({ key: k, label: k.toUpperCase() + '系', value: p1c[k], onChange: (e) => setP1c(p => ({ ...p, [k]: +e.target.value || 0 })) }))
+              ),
+              h('h3', { className: 'font-semibold mb-2' }, '助凝剂'),
+              h('div', { className: 'grid grid-cols-2 gap-2' },
+                ['a', 'b', 'c', 'd'].map(k => Input({ key: k, label: k.toUpperCase() + '系', value: p1f[k], onChange: (e) => setP1f(p => ({ ...p, [k]: +e.target.value || 0 })) }))
+              )
+            ),
+
+            Card({ title: '📊 二期差值' },
+              h('h3', { className: 'font-semibold mb-2' }, '混凝剂'),
+              h('div', { className: 'grid grid-cols-2 gap-2 mb-4' },
+                ['s51', 's52', 's61', 's62'].map(k => Input({ key: k, label: k.replace('s5', '5-').replace('s6', '6-'), value: p2c[k], onChange: (e) => setP2c(p => ({ ...p, [k]: +e.target.value || 0 })) }))
+              ),
+              h('h3', { className: 'font-semibold mb-2' }, '助凝剂'),
+              h('div', { className: 'grid grid-cols-2 gap-2' },
+                ['s51', 's52', 's61', 's62'].map(k => Input({ key: k, label: k.replace('s5', '5-').replace('s6', '6-'), value: p2f[k], onChange: (e) => setP2f(p => ({ ...p, [k]: +e.target.value || 0 })) }))
+              )
+            ),
+
+            h('button', {
+              onClick: calcDosing,
+              className: 'w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-white py-4 rounded-xl font-semibold mb-4'
+            }, '🧮 计算加药量'),
+
+            dRes && Card({ title: '📝 计算结果' },
+              h('div', { className: 'bg-gray-50 p-4 rounded-lg mb-3 font-mono text-sm' },
+                h('p', { className: 'font-bold mb-1' }, '一期：'),
+                h('p', null, `混凝 AB:${dRes.p1.coagAB} CD:${dRes.p1.coagCD}`),
+                h('p', null, `助凝 AB:${dRes.p1.flocAB} CD:${dRes.p1.flocCD}`),
+                h('p', { className: 'font-bold mt-2 mb-1' }, '二期：'),
+                h('p', null, `混凝 5-1:${dRes.p2.c51} 5-2:${dRes.p2.c52} 6-1:${dRes.p2.c61} 6-2:${dRes.p2.c62}`),
+                h('p', null, `助凝 5-1:${dRes.p2.f51} 5-2:${dRes.p2.f52} 6-1:${dRes.p2.f61} 6-2:${dRes.p2.f62}`)
+              ),
+              h('button', {
+                onClick: () => doCopy('d'),
+                className: 'w-full bg-emerald-500 text-white py-3 rounded-lg hover:bg-emerald-600'
+              }, '📋 复制结果')
+            )
+          ),
+
+          tab === 'chlorine' && h(Fragment, null,
+            Card({ title: '🧪 有效氯浓度' },
+              h('div', { className: 'grid grid-cols-2 gap-3' },
+                Input({ label: '一期(%)', value: conc.cl1, onChange: (e) => setConc(p => ({ ...p, cl1: +e.target.value || 0 })), step: '0.1' }),
+                Input({ label: '二期(%)', value: conc.cl2, onChange: (e) => setConc(p => ({ ...p, cl2: +e.target.value || 0 })), step: '0.1' })
+              )
+            ),
+
+            h('div', { className: 'bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4 rounded' },
+              h('label', { className: 'flex items-center gap-2' },
+                h('input', {
+                  type: 'checkbox',
+                  checked: incSupp,
+                  onChange: (e) => setIncSupp(e.target.checked),
+                  className: 'w-5 h-5'
+                }),
+                h('span', { className: 'text-yellow-800 font-medium' }, '启用补氯计算')
+              )
+            ),
+
+            Card({ title: '📊 前加氯差值' },
+              h('div', { className: 'grid grid-cols-2 gap-2' },
+                ['ab', 'cd', 'e', 'f'].map(k => Input({ key: k, label: k.toUpperCase(), value: pre[k], onChange: (e) => setPre(p => ({ ...p, [k]: +e.target.value || 0 })) }))
+              )
+            ),
+
+            Card({ title: '📊 主加氯差值' },
+              h('div', { className: 'grid grid-cols-2 gap-2' },
+                ['ab', 'cd', 'e', 'f'].map(k => Input({ key: k, label: k.toUpperCase(), value: main[k], onChange: (e) => setMain(p => ({ ...p, [k]: +e.target.value || 0 })) }))
+              )
+            ),
+
+            incSupp && Card({ title: '📊 补氯差值' },
+              h('div', { className: 'grid grid-cols-2 gap-2' },
+                ['a', 'b', 'c', 'd'].map(k => Input({ key: k, label: k.toUpperCase() + '系', value: supp[k], onChange: (e) => setSupp(p => ({ ...p, [k]: +e.target.value || 0 })) }))
+              )
+            ),
+
+            h('button', {
+              onClick: calcCl,
+              className: 'w-full bg-gradient-to-r from-emerald-500 to-teal-400 text-white py-4 rounded-xl font-semibold mb-4'
+            }, '🧮 计算加氯量'),
+
+            cRes && Card({ title: '📝 计算结果' },
+              h('div', { className: 'bg-gray-50 p-4 rounded-lg mb-3 font-mono text-sm' },
+                h('p', { className: 'font-bold mb-1' }, '前加氯：'),
+                h('p', null, `AB:${cRes.pre.ab} CD:${cRes.pre.cd} E:${cRes.pre.e} F:${cRes.pre.f}`),
+                h('p', { className: 'font-bold mt-2 mb-1' }, '主加氯：'),
+                h('p', null, `AB:${cRes.main.ab} CD:${cRes.main.cd} E:${cRes.main.e} F:${cRes.main.f}`),
+                cRes.supp && h(Fragment, null,
+                  h('p', { className: 'font-bold mt-2 mb-1' }, '补氯：'),
+                  h('p', null, `A:${cRes.supp.a} B:${cRes.supp.b} C:${cRes.supp.c} D:${cRes.supp.d}`)
+                )
+              ),
+              h('button', {
+                onClick: () => doCopy('c'),
+                className: 'w-full bg-emerald-500 text-white py-3 rounded-lg hover:bg-emerald-600'
+              }, '📋 复制结果')
+            )
+          ),
+
+          h('div', { className: 'text-center text-gray-600 text-sm mt-6 pb-4' },
+            h('p', null, '水处理加药计算系统 v' + CONFIG.version),
+            h('p', { className:
