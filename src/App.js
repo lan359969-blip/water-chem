@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-import DosingCalculation from './pages/DosingCalculation'
-import DrugConsumption from './pages/DrugConsumption'
-import DosingSystem from './pages/DosingSystem'
+import Home from './Home'
+import DosingCalculation from './DosingCalculation'
+import DrugConsumption from './DrugConsumption'
+import DosingSystem from './DosingSystem'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter>  basename="/water-chem"
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dosing-calculation" element={<DosingCalculation />} />
