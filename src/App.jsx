@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 import Home from './Home'
-import Dosing from './Dosing'
+import Dosing from './pages/dosing'
 
-function App() {
+export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -10,5 +10,3 @@ function App() {
     </Routes>
   )
 }
-
-export default App
