@@ -223,8 +223,6 @@ function DosingCalculation() {
           </Card>
 
           <Card title="📊 二期差值">
-            <h3
-          <Card title="📊 二期差值">
             <h3 className="section-title">混凝剂差值</h3>
             <div className="input-grid">
               {['s51', 's52', 's61', 's62'].map(k => (
