@@ -7,7 +7,7 @@ function Home() {
     <div className="container">
       <header className="header">
         <h1>🧪 水处理加药计算系统</h1>
-        <p className="version">工程级 v3.0.0</p>
+        <p className="version">工程级 v4.0.0</p>
       </header>
 
       <div className="nav-grid">
