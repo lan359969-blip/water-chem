@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './Home'
-import DosingCalculation from './DosingCalculation'
+import DosingCalculation from './DosingCalculation.jsx'
 
 function App() {
   return (
