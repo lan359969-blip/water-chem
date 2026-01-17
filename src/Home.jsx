@@ -13,7 +13,7 @@ function Home() {
       <div className="nav-grid">
         <div
           className="nav-card"
-          onClick={() => navigate('/dosing-calculation')}
+          onClick={() => navigate('/dosing')}
         >
           <div className="nav-icon">💊</div>
           <h2>加药加氯计算</h2>
