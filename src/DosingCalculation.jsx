@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Card from '../components/Card'
-import InputField from '../components/InputField'
-import { showToast } from '../components/Toast'
-import { Storage } from '../utils/storage'
-import { Calculator } from '../utils/calculator'
+import Card from './components/Card'
+import InputField from './components/InputField'
+import { showToast } from './components/Toast'
+import { Storage } from './utils/storage'
+import { Calculator } from './utils/calculator'
 
 function DosingCalculation() {
   const navigate = useNavigate()
