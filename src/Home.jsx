@@ -11,10 +11,13 @@ function Home() {
       </header>
 
       <div className="nav-grid">
-        <div className="nav-card" onClick={() => navigate('/dosing-calculation')}>
+        <div
+          className="nav-card"
+          onClick={() => navigate('/dosing-calculation')}
+        >
           <div className="nav-icon">💊</div>
           <h2>加药加氯计算</h2>
-          <p>一期/二期加药量、加氯量精确计算</p>
+          <p>一期 / 二期加药量、加氯量精确计算</p>
         </div>
       </div>
 
