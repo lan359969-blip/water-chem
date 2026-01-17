@@ -95,18 +95,12 @@ function DosingCalculation() {
   const copyResult = async (type) => {
     let text = ''
     if (type === 'dosing' && dosingResult) {
-      text = `一期：\n混凝 AB:${dosingResult.p1.coagAB} CD:${dosingResult.p1.coagCD}\n助凝 AB:${dosingResult.p1.flocAB} CD:${dosingResult.p1.flocCD}\n\n二期：\n混凝 5-1:${dosingResult.p2.c51} 5-2:${dosingResult.p2.c52} 6-1:${dosingResult.p2.c61} 6-2:${dosingResult.p2.c62}\n助凝 5-1:${dosingResult.p2.f51} 5-2:${dosingResult.p2.f52} 6-1:${dosingResult.p2.f61} 6-2:${dosingResult.p2.f62}`
+      text = `一期：\n混凝 AB:${dosingResult.p1.coagAB} CD:${dosingResult.p1.coagCD}`
     } else if (type === 'chlorine' && chlorineResult) {
-      text = `前加氯：\nAB:${chlorineResult.pre.ab} CD:${chlorineResult.pre.cd} E:${chlorineResult.pre.e} F:${chlorineResult.pre.f}\n\n主加氯：\nAB:${chlorineResult.main.ab} CD:${chlorineResult.main.cd} E:${chlorineResult.main.e} F:${chlorineResult.main.f}`
-      if (chlorineResult.supp) text += `\n\n补氯：\nA:${chlorineResult.supp.a} B:${chlorineResult.supp.b} C:${chlorineResult.supp.c} D:${chlorineResult.supp.d}`
+      text = `前加氯：AB:${chlorineResult.pre.ab}`
     }
-    
-    try {
-      await navigator.clipboard.writeText(text)
-      showToast('✅ 已复制')
-    } catch (e) {
-      showToast('❌ 复制失败')
-    }
+    await navigator.clipboard.writeText(text)
+    showToast('✅ 已复制')
   }
 
   return (
@@ -116,138 +110,54 @@ function DosingCalculation() {
         <h1>💊 加药加氯计算</h1>
       </header>
 
-      <div className="warning-box">
-        ⚠️ 输入的差值均为无视小数点后的整数
-      </div>
-
-      <Card title="📋 微信数据导入">
-        <textarea 
-          value={wechatInput}
-          onChange={(e) => setWechatInput(e.target.value)}
-          placeholder="粘贴格式：【1-2系: 1000】【3-4系: 2000】【5-6系: 3000】"
-          rows="3"
-        />
-        <div className="btn-group">
-          <button onClick={parseWechat} className="btn btn-primary">🔍 解析数据</button>
-          <button onClick={() => setWechatInput('')} className="btn btn-secondary">🗑️ 清空</button>
-        </div>
-      </Card>
-
-      <Card title="⚙️ 进水量配置">
-        <div className="input-grid">
-          <InputField label="1-2系进水量" value={waters.w12} onChange={(e) => setWaters(p => ({ ...p, w12: +e.target.value || 0 }))} />
-          <InputField label="3-4系进水量" value={waters.w34} onChange={(e) => setWaters(p => ({ ...p, w34: +e.target.value || 0 }))} />
-          <InputField label="5-6系进水量（总）" value={waters.w56} onChange={(e) => setWaters(p => ({ ...p, w56: +e.target.value || 0 }))} />
-        </div>
-        
-        <div className="water-split-box">
-          <div className="water-split-title">💡 水量分配调节</div>
-          <div className="water-split-grid">
-            <InputField label="5-1系" value={waters.w51} onChange={(e) => {
-              const v = +e.target.value || 0
-              setWaters(p => ({ ...p, w51: v }))
-              const total = v + waters.w52 + waters.w61 + waters.w62
-              if (total > 0) setRatios({ r51: v/total, r52: waters.w52/total, r61: waters.w61/total, r62: waters.w62/total })
-            }} />
-            <InputField label="5-2系" value={waters.w52} onChange={(e) => {
-              const v = +e.target.value || 0
-              setWaters(p => ({ ...p, w52: v }))
-              const total = waters.w51 + v + waters.w61 + waters.w62
-              if (total > 0) setRatios({ r51: waters.w51/total, r52: v/total, r61: waters.w61/total, r62: waters.w62/total })
-            }} />
-            <InputField label="6-1系" value={waters.w61} onChange={(e) => {
-              const v = +e.target.value || 0
-              setWaters(p => ({ ...p, w61: v }))
-              const total = waters.w51 + waters.w52 + v + waters.w62
-              if (total > 0) setRatios({ r51: waters.w51/total, r52: waters.w52/total, r61: v/total, r62: waters.w62/total })
-            }} />
-            <InputField label="6-2系" value={waters.w62} onChange={(e) => {
-              const v = +e.target.value || 0
-              setWaters(p => ({ ...p, w62: v }))
-              const total = waters.w51 + waters.w52 + waters.w61 + v
-              if (total > 0) setRatios({ r51: waters.w51/total, r52: waters.w52/total, r61: waters.w61/total, r62: v/total })
-            }} />
-          </div>
-        </div>
-      </Card>
+      <div className="warning-box">⚠️ 输入的差值均为无视小数点后的整数</div>
 
       <div className="tab-buttons">
-        <button 
-          className={`tab-btn ${activeTab === 'dosing' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dosing')}
-        >
-          💊 加药计算
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'chlorine' ? 'active' : ''}`}
-          onClick={() => setActiveTab('chlorine')}
-        >
-          🧪 加氯计算
-        </button>
+        <button className={activeTab === 'dosing' ? 'tab-btn active' : 'tab-btn'} onClick={() => setActiveTab('dosing')}>💊 加药计算</button>
+        <button className={activeTab === 'chlorine' ? 'tab-btn active' : 'tab-btn'} onClick={() => setActiveTab('chlorine')}>🧪 加氯计算</button>
       </div>
 
       {activeTab === 'dosing' && (
         <div className="tab-content active">
-          <Card title="🧪 浓度配置">
-            <div className="input-grid">
-              <InputField label="一期混凝剂(%)" value={conc.p1Coag} onChange={(e) => setConc(p => ({ ...p, p1Coag: +e.target.value || 0 }))} step="0.1" />
-              <InputField label="一期助凝剂(%)" value={conc.p1Floc} onChange={(e) => setConc(p => ({ ...p, p1Floc: +e.target.value || 0 }))} step="0.1" />
-              <InputField label="二期混凝剂(%)" value={conc.p2Coag} onChange={(e) => setConc(p => ({ ...p, p2Coag: +e.target.value || 0 }))} step="0.1" />
-              <InputField label="二期助凝剂(%)" value={conc.p2Floc} onChange={(e) => setConc(p => ({ ...p, p2Floc: +e.target.value || 0 }))} step="0.1" />
-            </div>
-          </Card>
-
-          <Card title="📊 一期差值">
-            <h3 className="section-title">混凝剂差值</h3>
-            <div className="input-grid">
-              {['a', 'b', 'c', 'd'].map(k => (
-                <InputField 
-                  key={k}
-                  label={`${k.toUpperCase()}系`}
-                  value={p1CoagDiff[k]}
-                  onChange={(e) => setP1CoagDiff(p => ({ ...p, [k]: +e.target.value || 0 }))}
-                />
-              ))}
-            </div>
-            <h3 className="section-title">助凝剂差值</h3>
-            <div className="input-grid">
-              {['a', 'b', 'c', 'd'].map(k => (
-                <InputField 
-                  key={k}
-                  label={`${k.toUpperCase()}系`}
-                  value={p1FlocDiff[k]}
-                  onChange={(e) => setP1FlocDiff(p => ({ ...p, [k]: +e.target.value || 0 }))}
-                />
-              ))}
-            </div>
-          </Card>
-
           <Card title="📊 二期差值">
             <h3 className="section-title">混凝剂差值</h3>
             <div className="input-grid">
-              {['s51', 's52', 's61', 's62'].map(k => (
+              {['s51','s52','s61','s62'].map(k => (
                 <InputField
                   key={k}
                   label={k.toUpperCase()}
                   value={p2CoagDiff[k]}
-                  onChange={(e) =>
-                    setP2CoagDiff(p => ({ ...p, [k]: +e.target.value || 0 }))
-                  }
+                  onChange={(e) => setP2CoagDiff(p => ({ ...p, [k]: +e.target.value || 0 }))}
                 />
               ))}
             </div>
 
             <h3 className="section-title">助凝剂差值</h3>
             <div className="input-grid">
-              {['s51', 's52', 's61', 's62'].map(k => (
+              {['s51','s52','s61','s62'].map(k => (
                 <InputField
                   key={k}
                   label={k.toUpperCase()}
                   value={p2FlocDiff[k]}
-                  onChange={(e) =>
-                    setP2FlocDiff(p => ({ ...p, [k]: +e.target.value || 0 }))
-                  }
+                  onChange={(e) => setP2FlocDiff(p => ({ ...p, [k]: +e.target.value || 0 }))}
                 />
               ))}
             </div>
+
+            <button className="btn btn-primary" onClick={calcDosing}>计算</button>
           </Card>
+        </div>
+      )}
+
+      {activeTab === 'chlorine' && (
+        <div className="tab-content active">
+          <Card title="🧪 加氯计算">
+            <button className="btn btn-primary" onClick={calcChlorine}>计算</button>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default DosingCalculation
