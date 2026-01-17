@@ -224,3 +224,32 @@ function DosingCalculation() {
 
           <Card title="📊 二期差值">
             <h3
+          <Card title="📊 二期差值">
+            <h3 className="section-title">混凝剂差值</h3>
+            <div className="input-grid">
+              {['s51', 's52', 's61', 's62'].map(k => (
+                <InputField
+                  key={k}
+                  label={k.toUpperCase()}
+                  value={p2CoagDiff[k]}
+                  onChange={(e) =>
+                    setP2CoagDiff(p => ({ ...p, [k]: +e.target.value || 0 }))
+                  }
+                />
+              ))}
+            </div>
+
+            <h3 className="section-title">助凝剂差值</h3>
+            <div className="input-grid">
+              {['s51', 's52', 's61', 's62'].map(k => (
+                <InputField
+                  key={k}
+                  label={k.toUpperCase()}
+                  value={p2FlocDiff[k]}
+                  onChange={(e) =>
+                    setP2FlocDiff(p => ({ ...p, [k]: +e.target.value || 0 }))
+                  }
+                />
+              ))}
+            </div>
+          </Card>
