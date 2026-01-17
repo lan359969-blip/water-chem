@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
-  base: '/',
+  base: '/water-chem/',
   plugins: [react()],
-  server: {
-    host: true,      // ⭐ 允许手机访问
-    port: 3000,
-    open: true
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src')
+    }
   }
 })
