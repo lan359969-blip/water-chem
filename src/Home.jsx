@@ -16,18 +16,6 @@ function Home() {
           <h2>加药加氯计算</h2>
           <p>一期/二期加药量、加氯量精确计算</p>
         </div>
-
-        <div className="nav-card" onClick={() => navigate('/drug-consumption')}>
-          <div className="nav-icon">📊</div>
-          <h2>药剂消耗核算</h2>
-          <p>班报/日报自动生成，消耗统计</p>
-        </div>
-
-        <div className="nav-card" onClick={() => navigate('/dosing-system')}>
-          <div className="nav-icon">⚗️</div>
-          <h2>配药计算系统</h2>
-          <p>混凝剂/助凝剂配药水量计算</p>
-        </div>
       </div>
 
       <footer className="footer">
