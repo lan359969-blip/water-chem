@@ -6,7 +6,7 @@ import DosingSystem from './DosingSystem'
 
 function App() {
   return (
-    <BrowserRouter>  basename="/water-chem">
+    <BrowserRouter   basename="/water-chem">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dosing-calculation" element={<DosingCalculation />} />
