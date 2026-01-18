@@ -1,13 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'path'
+import { resolve } from 'path'
 
 export default defineConfig({
   base: './',
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src')
+  build: {
+    rollupOptions: {
+      input: {
+        home: resolve(__dirname, 'src/pages/home/index.html'),
+        dosing: resolve(__dirname, 'src/pages/dosing/index.html')
+      }
     }
   }
 })
