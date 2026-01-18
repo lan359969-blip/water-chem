@@ -1,6 +1,16 @@
-export const PI = Math.PI
+// src/modules/dosing/shared/unit.js
 
-export const DENSITY = {
-  COAG: 1200, // 混凝剂 kg/m³
-  AID: 1100   // 助凝剂 kg/m³
+/**
+ * mg/L → kg/m³
+ */
+export function mgLToKgM3(value) {
+  return value * 0.001
+}
+
+/**
+ * 百分比 → 小数
+ * 10 (%) → 0.10
+ */
+export function percentToRatio(percent) {
+  return percent / 100
 }
