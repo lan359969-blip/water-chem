@@ -1,28 +1,129 @@
 import { useState } from 'react'
-import InputPanel from './InputPanel'
-import ResultPanel from './ResultPanel'
-import { p1, p2 } from '@/modules/dosing'
+import { p1, p2 } from '../../modules/dosing'
 
 export default function DosingPage() {
-  const [params, setParams] = useState(null)
-  const [result, setResult] = useState(null)
+  const [stage, setStage] = useState('p1')   // p1 | p2
+  const [type, setType] = useState('coag')   // coag | aid
 
-  const handleCalc = (stage, type, data) => {
-    let res
-    if (stage === 'p1' && type === 'coag') res = p1.coag(data)
-    if (stage === 'p1' && type === 'aid')  res = p1.aid(data)
-    if (stage === 'p2' && type === 'coag') res = p2.coag(data)
-    if (stage === 'p2' && type === 'aid')  res = p2.aid(data)
+  const [H, setH] = useState('')
+  const [C, setC] = useState('')
+  const [result, setResult] = useState('')
 
-    setResult(res)
+  function calc() {
+    let r = ''
+
+    try {
+      if (stage === 'p1' && type === 'coag') r = p1.calcP1Coag(H, C)
+      if (stage === 'p1' && type === 'aid')  r = p1.calcP1Aid(H, C)
+      if (stage === 'p2' && type === 'coag') r = p2.calcP2Coag(H, C)
+      if (stage === 'p2' && type === 'aid')  r = p2.calcP2Aid(H, C)
+
+      setResult(r)
+    } catch {
+      setResult('❌ 计算异常')
+    }
   }
 
   return (
-    <div className="dosing-page">
-      <h1>配药计算（工程模式）</h1>
+    <div style={styles.page}>
+      <h2>水厂配药计算系统</h2>
 
-      <InputPanel onCalc={handleCalc} />
-      <ResultPanel data={result} />
+      {/* 工段选择 */}
+      <div style={styles.row}>
+        <label>工段：</label>
+        <button
+          style={stage === 'p1' ? styles.active : styles.btn}
+          onClick={() => setStage('p1')}
+        >
+          一期
+        </button>
+        <button
+          style={stage === 'p2' ? styles.active : styles.btn}
+          onClick={() => setStage('p2')}
+        >
+          二期
+        </button>
+      </div>
+
+      {/* 类型选择 */}
+      <div style={styles.row}>
+        <label>类型：</label>
+        <button
+          style={type === 'coag' ? styles.active : styles.btn}
+          onClick={() => setType('coag')}
+        >
+          混凝
+        </button>
+        <button
+          style={type === 'aid' ? styles.active : styles.btn}
+          onClick={() => setType('aid')}
+        >
+          助凝
+        </button>
+      </div>
+
+      <hr />
+
+      {/* 参数输入区 */}
+      <div style={styles.block}>
+        <h4>参数输入</h4>
+
+        <input
+          placeholder="液位高度 H（m）"
+          value={H}
+          onChange={e => setH(e.target.value)}
+        />
+
+        <input
+          placeholder="药液浓度 C（%）"
+          value={C}
+          onChange={e => setC(e.target.value)}
+        />
+
+        <button style={styles.calc} onClick={calc}>
+          ▶ 计算
+        </button>
+      </div>
+
+      {/* 结果显示区 */}
+      <div style={styles.block}>
+        <h4>计算结果</h4>
+        <pre style={result.includes('⚠') ? styles.warn : styles.ok}>
+          {result || '—'}
+        </pre>
+      </div>
     </div>
   )
+}
+
+const styles = {
+  page: {
+    padding: 20,
+    maxWidth: 480,
+    fontFamily: 'sans-serif'
+  },
+  row: {
+    marginBottom: 10
+  },
+  btn: {
+    marginLeft: 6
+  },
+  active: {
+    marginLeft: 6,
+    background: '#1677ff',
+    color: '#fff'
+  },
+  block: {
+    marginTop: 15
+  },
+  calc: {
+    marginTop: 10,
+    width: '100%'
+  },
+  ok: {
+    color: '#222'
+  },
+  warn: {
+    color: 'red'
+  }
 }
