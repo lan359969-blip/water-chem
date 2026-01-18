@@ -1,5 +1,10 @@
 import { useState } from 'react'
-import { p1, p2 } from '../../modules/dosing'
+import {
+  calcP1Coag,
+  calcP1Aid,
+  calcP2Coag,
+  calcP2Aid
+} from '../../modules/dosing'
 
 export default function DosingPage() {
   const [stage, setStage] = useState('p1')   // p1 | p2
@@ -10,19 +15,20 @@ export default function DosingPage() {
   const [result, setResult] = useState('')
 
   function calc() {
+  try {
     let r = ''
 
-    try {
-      if (stage === 'p1' && type === 'coag') r = p1.calcP1Coag(H, C)
-      if (stage === 'p1' && type === 'aid')  r = p1.calcP1Aid(H, C)
-      if (stage === 'p2' && type === 'coag') r = p2.calcP2Coag(H, C)
-      if (stage === 'p2' && type === 'aid')  r = p2.calcP2Aid(H, C)
+    if (stage === 'p1' && type === 'coag') r = calcP1Coag(H, C)
+    if (stage === 'p1' && type === 'aid')  r = calcP1Aid(H, C)
+    if (stage === 'p2' && type === 'coag') r = calcP2Coag(H, C)
+    if (stage === 'p2' && type === 'aid')  r = calcP2Aid(H, C)
 
-      setResult(r)
-    } catch {
-      setResult('❌ 计算异常')
-    }
+    setResult(String(r))
+  } catch (e) {
+    console.error(e)
+    setResult('❌ 计算异常')
   }
+}
 
   return (
     <div style={styles.page}>
