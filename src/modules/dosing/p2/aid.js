@@ -1,57 +1,61 @@
 // src/modules/dosing/p2/aid.js
-// 二期助凝配药计算（完整工程版，不删减原 HTML 公式与判断）
+// 二期助凝配药计算（完整工程链）
 
-export function calcP2Aid(input) {
+export function calcP2Aid(params) {
   const {
-    H,          // 计量桶液位高度 m
-    C,          // 目标浓度 %
-    tankL,      // 计量桶长度 m
-    tankW,      // 计量桶宽度 m
-    density,    // 原液密度 kg/m³
+    D,          // 设计投加量 mg/L
+    Q,          // 日处理水量 m³/d
+    C,          // 原液浓度 %
+    density,    // 药剂密度 kg/m³
+    R,          // 配药池半径 m
+    H,          // 当前液位 m
     poolArea,   // 配药池面积 m²
-    poolMaxH    // 配药池最大允许液位 m
-  } = input
+    maxH        // 最大允许液位 m
+  } = params
 
-  const h = parseFloat(H)
-  const c = parseFloat(C)
+  const d = Number(D)
+  const q = Number(Q)
+  const c = Number(C)
+  const rho = Number(density)
+  const r = Number(R)
+  const h = Number(H)
 
-  if (isNaN(h) || isNaN(c) || h <= 0 || c <= 0) {
-    return '请输入有效数值'
+  if ([d, q, c, rho, r, h].some(v => isNaN(v) || v <= 0)) {
+    return { error: '二期助凝：输入参数不完整或非法' }
   }
 
-  /* ===== 原 HTML：计量桶原液体积 ===== */
-  const V_drug_raw = tankL * tankW * h
+  /* ① 日耗药量 kg/d */
+  const dayMass = d * q / 1000
 
-  /* ===== 原 HTML：计量桶原液质量 ===== */
-  const M_drug_raw = V_drug_raw * density
+  /* ② 原液体积 m³ */
+  const rawVolume = dayMass / rho
 
-  /* ===== 原 HTML：目标所需总体积 ===== */
-  const V_total_raw = (M_drug_raw / (c / 100)) / 1000
+  /* ③ 折算所需体积 m³ */
+  const needVolume = rawVolume / (c / 100)
 
-  /* ===== 原 HTML：需补水体积 ===== */
-  const V_add_raw = V_total_raw - V_drug_raw
+  /* ④ 当前池体积 m³ */
+  const currentVolume = Math.PI * r * r * h
 
-  /* ===== 原 HTML：折算补水高度 ===== */
-  const H_add_raw = V_add_raw / poolArea
+  /* ⑤ 需补加体积 m³ */
+  const addVolume = needVolume - currentVolume
 
-  let result = ''
-  result += `【二期助凝计算结果】\n\n`
+  /* ⑥ 折算补水高度 m */
+  const addHeight = addVolume / poolArea
 
-  result += `计量桶原液体积：${V_drug_raw.toFixed(2)} m³\n`
-  result += `计量桶原液质量：${M_drug_raw.toFixed(2)} kg\n\n`
+  /* ⑦ 最终液位 & 溢流判断 */
+  const finalHeight = h + addHeight
+  const overflow = finalHeight > maxH
 
-  result += `目标所需总体积：${V_total_raw.toFixed(2)} m³\n`
-  result += `计算公式：V总 = (原液质量 ÷ 目标浓度) ÷ 1000\n\n`
+  return {
+    stage: '二期助凝',
 
-  result += `需补水体积：${V_add_raw.toFixed(2)} m³\n`
-  result += `折算补水高度：${H_add_raw.toFixed(2)} m\n`
-
-  /* ===== 原 HTML：溢流判断 ===== */
-  if (H_add_raw > poolMaxH) {
-    result += `\n⚠️ 溢流风险：补水高度超过池体最大液位 ${poolMaxH} m`
-  } else {
-    result += `\n✅ 补水高度满足池体要求`
+    dayMass,
+    rawVolume,
+    needVolume,
+    currentVolume,
+    addVolume,
+    addHeight,
+    finalHeight,
+    overflow
   }
-
-  return result
 }
