@@ -1,1 +1,1 @@
-keep
+export { calcP1Coag } from './coag'
