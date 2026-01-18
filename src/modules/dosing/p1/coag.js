@@ -1,53 +1,89 @@
-// 一期混凝配药计算（完全还原原 HTML）
+// src/modules/dosing/p1/coag.js
+// 一期混凝配药计算（完整工程链，不删减公式）
 
-export function calcP1Coag(input) {
+export function calcP1Coag(params) {
   const {
-    H,          // 计量桶液位高度 m
-    C,          // 目标浓度 %
-    radius,     // 计量桶半径 m
-    density,    // 原液密度 kg/m³
-    poolArea,   // 配药池面积 m²
-    poolMaxH    // 配药池最大允许液位 m
-  } = input
+    D,          // 设计投加量 mg/L
+    Q,          // 日处理水量 m³/d
+    C,          // 原液浓度 %
+    density,    // 药剂密度 kg/m³
+    R,          // 配药池半径 m
+    H,          // 当前液位 m
+    poolArea,   // 配药池面积 m²（用于补水高度）
+    maxH        // 最大允许液位 m
+  } = params
 
-  const h = parseFloat(H)
-  const c = parseFloat(C)
+  const d = Number(D)
+  const q = Number(Q)
+  const c = Number(C)
+  const rho = Number(density)
+  const r = Number(R)
+  const h = Number(H)
 
-  if (isNaN(h) || isNaN(c) || h <= 0 || c <= 0) {
-    return '请输入有效数值'
+  if (
+    [d, q, c, rho, r, h].some(v => isNaN(v) || v <= 0)
+  ) {
+    return { error: '一期混凝：输入参数不完整或非法' }
   }
 
-  /* ===== 原 HTML：计量桶原液体积 ===== */
-  const V_drug_raw = Math.PI * radius * radius * h
+  /* ===============================
+     ① 日耗药量（kg/d）
+     原 HTML：D × Q / 1000
+  =============================== */
+  const dayMass = d * q / 1000
 
-  /* ===== 原 HTML：计量桶原液质量 ===== */
-  const M_drug_raw = V_drug_raw * density
+  /* ===============================
+     ② 原液体积（m³/d）
+     原 HTML：日耗药量 / 密度
+  =============================== */
+  const rawVolume = dayMass / rho
 
-  /* ===== 原 HTML：目标所需总体积 ===== */
-  const V_total_raw = (M_drug_raw / (c / 100)) / 1000
+  /* ===============================
+     ③ 按浓度折算所需体积（m³）
+     原 HTML：原液体积 / (C / 100)
+  =============================== */
+  const needVolume = rawVolume / (c / 100)
 
-  /* ===== 原 HTML：需补水体积 ===== */
-  const V_add_raw = V_total_raw - V_drug_raw
+  /* ===============================
+     ④ 当前池内容积（m³）
+     原 HTML：π × R² × H
+  =============================== */
+  const currentVolume = Math.PI * r * r * h
 
-  /* ===== 原 HTML：折算补水高度 ===== */
-  const H_add_raw = V_add_raw / poolArea
+  /* ===============================
+     ⑤ 需补加体积（m³）
+     原 HTML：所需体积 − 当前体积
+  =============================== */
+  const addVolume = needVolume - currentVolume
 
-  let result = ''
-  result += `计量桶原液体积：${V_drug_raw.toFixed(2)} m³\n`
-  result += `计量桶原液质量：${M_drug_raw.toFixed(2)} kg\n\n`
+  /* ===============================
+     ⑥ 折算补水高度（m）
+     原 HTML：补加体积 / 池面积
+  =============================== */
+  const addHeight = addVolume / poolArea
 
-  result += `目标所需总体积：${V_total_raw.toFixed(2)} m³\n`
-  result += `公式：V总 = (原液质量 ÷ 目标浓度) ÷ 1000\n\n`
+  /* ===============================
+     ⑦ 溢流判断
+  =============================== */
+  const finalHeight = h + addHeight
+  const overflow = finalHeight > maxH
 
-  result += `需补水体积：${V_add_raw.toFixed(2)} m³\n`
-  result += `折算补水高度：${H_add_raw.toFixed(2)} m\n`
+  /* ===============================
+     工程结果（完整返回）
+  =============================== */
+  return {
+    stage: '一期混凝',
 
-  /* ===== 原 HTML：溢流判断 ===== */
-  if (H_add_raw > poolMaxH) {
-    result += `⚠️ 溢流：补水高度超过池体最大液位 ${poolMaxH} m`
-  } else {
-    result += `✅ 补水高度满足要求`
+    // 原 HTML 每一行结果
+    dayMass,        // 日耗药量 kg/d
+    rawVolume,      // 原液体积 m³
+    needVolume,     // 折算所需体积 m³
+    currentVolume,  // 当前池体积 m³
+    addVolume,      // 需补加体积 m³
+    addHeight,      // 补水高度 m
+    finalHeight,    // 最终液位 m
+
+    // 工程判断
+    overflow
   }
-
-  return result
 }
