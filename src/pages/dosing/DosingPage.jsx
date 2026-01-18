@@ -4,7 +4,7 @@ import {
   calcP1Aid,
   calcP2Coag,
   calcP2Aid
-} from '@/utils/dosing'
+} from '../../utils/dosing'
 
 export default function DosingPage() {
   const [m, setM] = useState('')
