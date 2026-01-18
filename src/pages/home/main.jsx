@@ -6,7 +6,7 @@ function Home() {
     <div style={{ padding: 20 }}>
       <h1>水厂加药与配药系统</h1>
 
-      <a href="./dosing/index.html">
+      <a href="./src/pages/dosing/index.html">
         进入配药计算模块
       </a>
     </div>
