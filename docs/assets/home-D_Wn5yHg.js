@@ -1,1 +1,0 @@
-import{c as n,j as e}from"./client-B_pnGUEq.js";function t(){return e.jsxs("div",{style:{padding:20},children:[e.jsx("h1",{children:"水厂加药与配药系统"}),e.jsx("a",{href:"./dosing/index.html",children:"进入配药计算模块"})]})}n.createRoot(document.getElementById("root")).render(e.jsx(t,{}));
