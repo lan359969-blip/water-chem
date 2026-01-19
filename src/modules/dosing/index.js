@@ -1,2 +1,2 @@
-export * as p1 from './p1'
-export * as p2 from './p2'
+export { calcP1Coag, calcP1Aid } from './p1'
+export { calcP2Coag, calcP2Aid } from './p2'
