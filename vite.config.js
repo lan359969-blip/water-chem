@@ -5,6 +5,6 @@ export default defineConfig({
   base: '/water-chem/',
   plugins: [react()],
   build: {
-    outDir: 'docs'
+    outDir: 'dist'
   }
 })
