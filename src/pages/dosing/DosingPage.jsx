@@ -16,14 +16,28 @@ export default function DosingPage() {
 
   function calc() {
   try {
+    const params = {
+      // —— 示例工程参数（先写死，后面再做输入）——
+      D: 0.05,
+      Q: 100000,
+      density: 1.2,
+      R: 2,
+      poolArea: 12.56,
+      maxH: 4,
+
+      // —— 页面输入 ——
+      H: Number(H),
+      C: Number(C)
+    }
+
     let r = ''
 
-    if (stage === 'p1' && type === 'coag') r = calcP1Coag(H, C)
-    if (stage === 'p1' && type === 'aid')  r = calcP1Aid(H, C)
-    if (stage === 'p2' && type === 'coag') r = calcP2Coag(H, C)
-    if (stage === 'p2' && type === 'aid')  r = calcP2Aid(H, C)
+    if (stage === 'p1' && type === 'coag') r = calcP1Coag(params)
+    if (stage === 'p1' && type === 'aid')  r = calcP1Aid(params)
+    if (stage === 'p2' && type === 'coag') r = calcP2Coag(params)
+    if (stage === 'p2' && type === 'aid')  r = calcP2Aid(params)
 
-    setResult(String(r))
+    setResult(JSON.stringify(r, null, 2))
   } catch (e) {
     console.error(e)
     setResult('❌ 计算异常')
