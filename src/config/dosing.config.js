@@ -1,31 +1,53 @@
+// =============================================
+// 配药系统池体参数配置
+// 数据来源：实际设备尺寸
+// =============================================
 export const DOSING = {
+
   P1: {
+    // 一期混凝剂（PAC固体）
+    // 输入：固体投加量M(吨) + 目标浓度C(%)
     COAG: {
-      POOL_DIAMETER: 1.2,   // m
-      POOL_AREA: 1.13,      // m²
-      DENSITY: 1.08,        // kg/L
-      MAX_H: 2.8            // m
+      DISS_VOLUME_MAX: 20,      // 溶解池最大体积 m³
+      DISS_AREA:       8,       // 溶解池底面积 m²（20÷2.5）
+      DISS_MAX_H:      2.5,     // 溶解池最大液位 m
+      SOL_AREA:        37.21,   // 溶液池底面积 m²
+      SOL_MAX_H:       3.2,     // 溶液池最大液位 m
     },
+
+    // 一期助凝剂（益维净液体）
+    // 输入：计量桶液位H(m) + 目标浓度C(%)
     AID: {
-      POOL_DIAMETER: 1.0,
-      POOL_AREA: 0.79,
-      DENSITY: 1.05,
-      MAX_H: 2.5
+      TANK_RADIUS:  0.66,       // 计量桶半径 m（圆形）
+      DENSITY:      1380,       // 药剂密度 kg/m³
+      SOL_AREA:     27.2,       // 溶液池底面积 m²（6.8×4）
+      SOL_MAX_H:    3.0,        // 溶液池最大液位 m
     }
   },
 
   P2: {
+    // 二期混凝剂（PAC固体）
+    // 输入：固体投加量M(吨) + 目标浓度C(%)
     COAG: {
-      POOL_DIAMETER: 1.5,
-      POOL_AREA: 1.77,
-      DENSITY: 1.1,
-      MAX_H: 3.0
+      DISS_SINGLE_L:   3.6,     // 单座溶解池长 m
+      DISS_SINGLE_W:   2.4,     // 单座溶解池宽 m
+      DISS_SINGLE_AREA:8.64,    // 单座溶解池面积 m²（3.6×2.4）
+      DISS_TOTAL_AREA: 17.28,   // 两座溶解池总面积 m²
+      DISS_MAX_H:      2.6,     // 溶解池最大液位 m
+      DISS_VOLUME_MAX: 44.928,  // 两座溶解池最大总体积 m³（8.64×2.6×2）
+      SOL_AREA:        24.84,   // 溶液池底面积 m²（5.4×4.6）
+      SOL_MAX_H:       2.7,     // 溶液池最大液位 m
     },
+
+    // 二期助凝剂（液体）
+    // 输入：计量桶液位H(m) + 目标浓度C(%)
     AID: {
-      POOL_DIAMETER: 1.2,
-      POOL_AREA: 1.13,
-      DENSITY: 1.06,
-      MAX_H: 2.6
+      TANK_L:      1.26,        // 计量桶长 m（长方体）
+      TANK_W:      1.26,        // 计量桶宽 m
+      TANK_AREA:   1.5876,      // 计量桶底面积 m²（1.26×1.26）
+      DENSITY:     1380,        // 药剂密度 kg/m³
+      SOL_AREA:    24.3,        // 溶液池底面积 m²（5.4×4.5）
+      SOL_MAX_H:   2.9,         // 溶液池最大液位 m
     }
   }
 }
