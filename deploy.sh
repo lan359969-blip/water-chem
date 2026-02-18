@@ -53,4 +53,4 @@ git push
 
 # 9️⃣ 提示部署完成
 echo "🎉 部署完成！"
-echo "🔗 访问网址：https://你的用户名.github.io/仓库名/ (根据你的仓库名修改)"
+echo "🔗 访问网址：https://lan359969-blip.github.io/water-chem/"
