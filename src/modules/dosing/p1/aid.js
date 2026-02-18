@@ -1,46 +1,38 @@
 import {
-  calcDayMass,
-  calcRawVolume,
-  calcNeedVolume,
-  calcCircleVolume,
-  calcAddVolume,
-  calcAddHeight,
-  calcFinalHeight,
+  calcTankVolumeCircle,
+  calcDrugMass,
+  calcAidNeedVolume,
+  calcAidAddVolume,
+  calcSolAddHeight,
   checkOverflow
-} from '../shared'
+} from '../shared/formula'
+import { DOSING } from '../../../config/dosing.config'
 
-import { validatePositiveNumbers } from '../shared'
+const CFG = DOSING.P1.AID
 
-export function calcP1Aid(params) {
-  const {
-    D, Q, C, density,
-    R, H, poolArea, maxH
-  } = params
+/**
+ * 一期助凝剂（益维净）计算
+ * @param {number} H - 计量桶液位（m）
+ * @param {number} C - 目标浓度（%）
+ */
+export function calcP1Aid(H, C) {
+  if (!H || !C || H <= 0 || C <= 0) return { error: '请输入有效正数' }
 
-  const err = validatePositiveNumbers(
-    { D, Q, C, density, R, H, poolArea, maxH },
-    '一期助凝'
-  )
-  if (err) return { error: err }
-
-  const dayMass = calcDayMass(D, Q)
-  const rawVolume = calcRawVolume(dayMass, density)
-  const needVolume = calcNeedVolume(rawVolume, C)
-  const currentVolume = calcCircleVolume(R, H)
-  const addVolume = calcAddVolume(needVolume, currentVolume)
-  const addHeight = calcAddHeight(addVolume, poolArea)
-  const finalHeight = calcFinalHeight(H, addHeight)
-  const overflow = checkOverflow(finalHeight, maxH)
+  const V_drug  = calcTankVolumeCircle(CFG.TANK_RADIUS, H)
+  const M_drug  = calcDrugMass(V_drug, CFG.DENSITY)
+  const V_total = calcAidNeedVolume(M_drug, C)
+  const V_add   = calcAidAddVolume(V_total, V_drug)
+  const H_add   = calcSolAddHeight(V_add, CFG.SOL_AREA)
+  const overflow = checkOverflow(H_add, CFG.SOL_MAX_H)
 
   return {
     stage: '一期助凝',
-    dayMass,
-    rawVolume,
-    needVolume,
-    currentVolume,
-    addVolume,
-    addHeight,
-    finalHeight,
+    V_drug,
+    M_drug,
+    V_total,
+    V_add,
+    H_add,
+    solMaxH: CFG.SOL_MAX_H,
     overflow
   }
 }
