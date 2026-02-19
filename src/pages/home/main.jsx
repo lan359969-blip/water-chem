@@ -6,7 +6,7 @@ function Home() {
   const [page, setPage] = useState('home')
 
   if (page === 'dosing') {
-    return <DosingPage />
+    return <DosingPage onBack={() => setPage('home')} />
   }
 
   return (
